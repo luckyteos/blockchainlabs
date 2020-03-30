@@ -1,4 +1,4 @@
-import time, random, struct, hashlib, binascii
+import time, random, struct, hashlib, binascii, socket
 
 # Binary encoding of sub version
 def create_sub_version():

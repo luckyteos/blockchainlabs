@@ -11,19 +11,22 @@ class Block:
         self.previous_hash = previous_hash
         self.nonce = nonce
 
-    def compute_hash(self, block):
+    def compute_hash(self):
         block_string = json.dumps(self.__dict__, sort_keys=True)
         return sha256(block_string.encode()).hexdigest()
 
 
-class Blockchain:
+class BlockChain:
     def __init__(self):
+        self.unconfirmed_transactions = []
         self.chain = []
         self.create_genesis_block()
-        self.difficulty = 2
+        self.difficulty = 5
 
     def create_genesis_block(self):
         genesis_block = Block(0, [], time.time(), "0")
+        genesis_block.hash = genesis_block.compute_hash()
+        self.chain.append(genesis_block)
 
     def last_block(self):
         return self.chain[-1]
@@ -50,6 +53,23 @@ class Blockchain:
 
     def is_valid_proof(self, block, block_hash):
         return block_hash.startswith('0' * self.difficulty) and block_hash == block.compute_hash()
+
+    def add_new_transaction(self, transaction):
+        self.unconfirmed_transactions.append(transaction)
+
+    def mine(self):
+        if not self.unconfirmed_transactions:
+            return False
+        last_block = self.last_block()
+
+        new_block = Block(index=last_block.index + 1, transactions=self.unconfirmed_transactions, timestamp=time.time(), previous_hash=last_block.hash)
+
+        proof = self.proof_of_work(new_block)
+        self.add_block(new_block, proof)
+        self.unconfirmed_transactions = []
+        return new_block.index
+
+
 
 
 

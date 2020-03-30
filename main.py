@@ -1,41 +1,73 @@
-import bitcoinEx
+from blockchainEx import BlockChain, Block
 import socket
+import json
+import threading
+import time
+
+
+def add_transaction(bc, transaction):
+    data = json.loads(transaction)
+    bc.add_new_transaction(data)
+    return True
+
+
+def retrieve_chain(bc):
+    chain_data = []
+    for block in bc.chain:
+        chain_data.append(block.__dict__)
+    return json.dumps({"length": len(chain_data), "chain": chain_data})
+
+
+def mine_unconfirmed_transactions(bc):
+    result = bc.mine()
+    if not result:
+        return "No transactions to mine"
+    return "Block #{} is mined.".format(result)
+
+
+def get_pending_transactions():
+    return json.dumps(blockChain.unconfirmed_transactions)
 
 if __name__ == '__main__':
-    # magic value for the main network
-    magic_value = 0xd9b4bef9
-    tx_id = "fc57704eff327aecfadb2cf3774edc919ba69aba624b836461ce2be9c00a0c20"
-    peer_ip_address = '104.199.184.15'
-    peer_tcp_port = 8333
-    buffer_size = 1024
+    blockChain = BlockChain()
 
-    # Create Request Objects
-    ver_payload = bitcoinEx.create_payload_ver(peer_ip_address)
-    ver_msg = bitcoinEx.create_message(magic_value, 'version', ver_payload)
-    ver_ack_msg = bitcoinEx.create_message_verack()
-    get_data_payload = bitcoinEx.create_payload_getdata(tx_id)
-    get_data_msg = bitcoinEx.create_message(magic_value, "getdata", get_data_payload)
+    trans = {"names": ["Wei Cheng", "Wei Liang", "Jun Min", "Jarren"]}
 
-    # Establish TCP connection
-    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    s.connect((peer_ip_address, peer_tcp_port))
+    add_transaction(blockChain, json.dumps(trans))
+    mine_unconfirmed_transactions(blockChain)
+    print(retrieve_chain(blockChain))
 
-    # Send message "version"
-    s.send(ver_msg)
-    res_data = s.recv(buffer_size)
-    bitcoinEx.print_response("version", ver_msg, res_data);
 
-    # Send msg "verack"
-    s.send(ver_ack_msg)
-    res_data = s.recv(buffer_size)
-    bitcoinEx.print_response("verack", ver_ack_msg, res_data)
+    # client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    # client.connect(("127.0.0.1", 49173))
+    # client.send("Retrieve Blockchain")
+    # client.recv(4096)
+    # client.close()
+    #
+    # server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    # server.bind(("localhost", 8072))
+    # server.listen(3)
+    #
+    # while True:
+    #     print("Awaiting connection")
+    #     conn, client_addr = server.accept()
+    #
+    #     try:
+    #         print("Connection from", client_addr)
+    #         while True:
+    #             data = conn.recv(16)
+    #             print("received".format(data))
+    #             if data:
+    #                 print("Sending data back to client")
+    #                 conn.sendall(data)
+    #     finally:
+    #         conn.close()
 
-    # Send msg "getdata"
-    s.send(get_data_msg)
-    res_data = s.recv(buffer_size)
-    bitcoinEx.print_response("getdata", get_data_msg, res_data)
 
-    s.close()
+
+
+
+
 
 
 
